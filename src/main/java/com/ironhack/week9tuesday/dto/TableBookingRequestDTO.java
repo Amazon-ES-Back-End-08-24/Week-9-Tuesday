@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-// control sobre el código - limit acceso a la entidad
+// DTO control sobre el código - limit acceso a la entidad
 public class TableBookingRequestDTO {
 
     // NO: " ", "", null, "    "...
