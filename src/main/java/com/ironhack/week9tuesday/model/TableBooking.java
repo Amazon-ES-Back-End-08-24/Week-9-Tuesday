@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDate;
 
@@ -14,6 +15,9 @@ import java.time.LocalDate;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@DynamicUpdate // para que solo se modifique en base de datos lo que actualizamos
+// Hibernate: update `table-bookings` set customer_name=? where id=?
+// Hibernate: update `table-bookings` set customer_name=?,number_of_guests=?,reservation_date=? where id=?
 public class TableBooking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

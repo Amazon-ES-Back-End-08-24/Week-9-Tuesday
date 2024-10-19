@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 // DTO control sobre el código - limit acceso a la entidad
-public class TableBookingRequestDTO {
+public class CreateTableBookingRequestDTO {
 
     // NO: " ", "", null, "    "...
     @NotBlank(message = "Customer name is required")

@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class TableBookingResponseDTO {
+public class CreateTableBookingResponseDTO {
     private Long id;
     private String message;
 }
