@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -91,13 +93,54 @@ public class TableBookingController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<TableBooking> deleteBooking(@PathVariable Long id){
+    public ResponseEntity<TableBooking> deleteBooking(@PathVariable Long id) {
         Optional<TableBooking> optionalTableBooking = tableBookingService.deleteBooking(id);
 
-        if (optionalTableBooking.isPresent()){
+        if (optionalTableBooking.isPresent()) {
             return ResponseEntity.ok(optionalTableBooking.get());
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+
+    // Get vistos Week 8 Tuesday:
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TableBooking> getBookingById(@PathVariable("id") Long bookingId) {
+        Optional<TableBooking> optionalTableBooking = tableBookingService.findBookingById(bookingId);
+        if (optionalTableBooking.isPresent()) {
+
+            TableBooking foundBooking = optionalTableBooking.get();
+            return ResponseEntity.ok(foundBooking);
+
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TableBooking>> getAllBookings() {
+        List<TableBooking> tableBookings = tableBookingService.findAllBookings();
+        if (tableBookings.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.ok(tableBookings);
+        }
+    }
+
+    // /search?customerName=Pepito
+    // /search?reservationDate=2024-11-09
+    // /search?customerName=Pepito&reservationDate=2024-11-09
+    @GetMapping("/search")
+    public List<TableBooking> getBookings(@RequestParam(required = false) String customerName,
+                                          @RequestParam(required = false) LocalDate reservationDate) {
+        return tableBookingService.findBookings(customerName, reservationDate);
+    }
+
+    @GetMapping("/sorted")
+    public List<TableBooking> getSortedBookings(@RequestParam String sortBy,
+                                                @RequestParam(required = false, defaultValue = "asc") String order) {
+        return tableBookingService.findSortedBookings(sortBy, order);
     }
 }

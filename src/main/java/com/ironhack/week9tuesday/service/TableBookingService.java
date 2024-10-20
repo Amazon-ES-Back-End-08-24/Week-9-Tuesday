@@ -4,9 +4,11 @@ import com.ironhack.week9tuesday.dto.*;
 import com.ironhack.week9tuesday.model.TableBooking;
 import com.ironhack.week9tuesday.repository.TableBookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -99,11 +101,11 @@ public class TableBookingService {
         }
     }
 
-    public Optional<TableBooking> updateBookingReservationDateSimplified(Long id, UpdateReservationDateRequestDTO dto){
+    public Optional<TableBooking> updateBookingReservationDateSimplified(Long id, UpdateReservationDateRequestDTO dto) {
 
         Optional<TableBooking> optionalTableBooking = tableBookingRepository.findById(id);
 
-        if (optionalTableBooking.isPresent()){
+        if (optionalTableBooking.isPresent()) {
             TableBooking tableBookingFromDB = optionalTableBooking.get();
 
             // solo guarda si se actualiza el reservation date
@@ -116,7 +118,7 @@ public class TableBookingService {
 //            }
 
             // guarda también si no se actualiza el reservation date
-            if (dto.getReservationDate() != null){
+            if (dto.getReservationDate() != null) {
                 tableBookingFromDB.setReservationDate(dto.getReservationDate());
             }
 
@@ -128,10 +130,10 @@ public class TableBookingService {
         }
     }
 
-    public Optional<TableBooking> deleteBooking(Long id){
+    public Optional<TableBooking> deleteBooking(Long id) {
         Optional<TableBooking> optionalTableBooking = tableBookingRepository.findById(id);
 
-        if (optionalTableBooking.isPresent()){
+        if (optionalTableBooking.isPresent()) {
             TableBooking tableBookingFromDB = optionalTableBooking.get();
             // recibe la entity tableBookingRepository.delete(tableBookingFromDB);
             tableBookingRepository.deleteById(id);
@@ -147,5 +149,40 @@ public class TableBookingService {
                 tableBooking.getCustomerName(), tableBooking.getReservationDate(),
                 tableBooking.getNumberOfGuests());
         return responseDTO;
+    }
+
+
+    // methods relacionados a los GET de Week 8 Tuesday:
+
+    public Optional<TableBooking> findBookingById(Long bookingId) {
+        // retornamos el optional directamente y en el controlador metemos la lógica relacionada a si está presente o no
+        return tableBookingRepository.findById(bookingId);
+    }
+
+    public List<TableBooking> findAllBookings() {
+        return tableBookingRepository.findAll();
+    }
+
+    public List<TableBooking> findBookings(String customerName, LocalDate reservationDate) {
+        if (customerName != null && reservationDate != null) {
+            return tableBookingRepository.findAllByCustomerNameAndReservationDate(customerName, reservationDate);
+
+        } else if (customerName != null) {
+            return tableBookingRepository.findAllByCustomerName(customerName);
+
+        } else if (reservationDate != null) {
+            return tableBookingRepository.findAllByReservationDate(reservationDate);
+
+        } else {
+            return tableBookingRepository.findAll();
+        }
+    }
+
+    public List<TableBooking> findSortedBookings(String sortBy, String order) {
+        if ("desc".equalsIgnoreCase(order)) {
+            return tableBookingRepository.findAll(Sort.by(Sort.Direction.DESC, sortBy));
+        } else {
+            return tableBookingRepository.findAll(Sort.by(Sort.Direction.ASC, sortBy));
+        }
     }
 }
