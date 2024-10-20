@@ -6,11 +6,23 @@
     - [¿Para qué se utiliza POST?](#para-qué-se-utiliza-post)
     - [Ejemplo con código](#ejemplo-con-código)
     - [Diferencias entre `@ResponseStatus` y `ResponseEntity`](#diferencias-entre-responsestatus-y-responseentity)
-    - [Validación con Jakarta Beans](#validación-con-jakarta-beans)
-
-2. [Ejercicio: Practicar el método POST con validación de datos en una API REST](#ejercicio-practicar-el-método-post-con-validación-de-datos-en-una-api-rest)
-    - [Contexto](#contexto)
-    - [Requerimientos](#requerimientos)
+    - [Validación con Jakarta Beans](#validación-con-jakarta-beans) 
+    - [Ejercicio: Practicar el método POST con validación de datos en una API REST](#ejercicio-practicar-el-método-post-con-validación-de-datos-en-una-api-rest)
+       - [Contexto](#contexto)
+       - [Requerimientos](#requerimientos)
+2. [Peticiones PUT](#2-peticiones-put)
+    - [¿Para qué se utiliza PUT?](#para-qué-se-utiliza-put)
+    - [Ejemplo con código](#ejemplo-con-código-1)
+3. [Peticiones PATCH](#3-peticiones-patch)
+    - [¿Para qué se utiliza PATCH?](#para-qué-se-utiliza-patch)
+    - [Ejemplo con código](#ejemplo-con-código-2)
+4. [Peticiones DELETE](#4-peticiones-delete)
+    - [¿Para qué se utiliza DELETE?](#para-qué-se-utiliza-delete)
+    - [Ejemplo con código](#ejemplo-con-código-3)
+5. [Ejercicio: Implementar PUT, PATCH y DELETE](#ejercicio-implementar-métodos-put-patch-y-delete-en-una-api-rest)
+    - [Objetivos](#objetivos)
+    - [Requerimientos](#requerimientos-1)
+    - [Validaciones](#validaciones)
 
 ## **1. Peticiones POST**
 
@@ -74,7 +86,7 @@ public class TableBookingController {
 
 Dependencia:
 
-```java
+```
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-validation</artifactId>
@@ -149,3 +161,162 @@ los errores de validación devolviendo un código de estado HTTP adecuado. Adem�
   creado en el formato de **ResponseDTO**.
 
 ---
+
+
+---
+
+## **2. Peticiones PUT**
+
+### ¿Para qué se utiliza PUT?
+El método **PUT** se utiliza para **actualizar un recurso existente** en su totalidad. En una operación PUT, el cliente envía un objeto completo para reemplazar el recurso actual.
+
+### Ejemplo con código:
+
+```java
+@PutMapping("/{id}")
+public ResponseEntity<TableBooking> updateBooking(@PathVariable Long id, @Valid @RequestBody TableBookingDTO tableBookingDTO) {
+    return tableBookingRepository.findById(id)
+            .map(existingBooking -> {
+                existingBooking.setCustomerName(tableBookingDTO.getCustomerName());
+                existingBooking.setReservationDate(tableBookingDTO.getReservationDate());
+                existingBooking.setNumberOfGuests(tableBookingDTO.getNumberOfGuests());
+                tableBookingRepository.save(existingBooking);
+                return ResponseEntity.ok(existingBooking);
+            })
+            .orElse(ResponseEntity.notFound().build());
+}
+```
+
+#### Explicación:
+
+- **`@PutMapping("/{id}")`**: Mapea este método a una solicitud PUT que incluye una **Path Variable** (`id`).
+- **`@Valid @RequestBody`**: El cuerpo de la solicitud contiene el objeto `TableBookingDTO`, que es validado antes de la actualización.
+- Devuelve **`200 OK`** si la actualización es exitosa y **`404 Not Found`** si el recurso no existe.
+
+---
+
+## **3. Peticiones PATCH**
+
+### ¿Para qué se utiliza PATCH?
+El método **PATCH** se usa para **aplicar actualizaciones parciales** a un recurso. A diferencia de PUT, PATCH permite enviar solo los campos que deben actualizarse.
+
+### Ejemplo con código:
+
+```java
+@PatchMapping("/{id}/reservation-date")
+public ResponseEntity<TableBooking> updateReservationDate(
+        @PathVariable Long id,
+        @RequestBody String reservationDate) {
+
+  return tableBookingRepository.findById(id)
+          .map(existingBooking -> {
+            try {
+              LocalDate newDate = LocalDate.parse(reservationDate);
+              existingBooking.setReservationDate(newDate);
+              tableBookingRepository.save(existingBooking);
+              return ResponseEntity.ok(existingBooking);
+            } catch (DateTimeParseException e) {
+              return ResponseEntity.badRequest().build(); // Devuelve 400 si la fecha no tiene un formato válido
+            }
+          })
+          .orElse(ResponseEntity.notFound().build()); // Devuelve 404 si la reserva no existe
+}
+```
+
+```java
+@PatchMapping("/{id}/number-of-guests")
+public ResponseEntity<TableBooking> updateNumberOfGuests(
+        @PathVariable Long id,
+        @RequestBody Integer numberOfGuests) {
+
+  if (numberOfGuests == null || numberOfGuests < 1) {
+    return ResponseEntity.badRequest().build(); // Devuelve 400 si el número de invitados es menor a 1 o es nulo
+  }
+
+  return tableBookingRepository.findById(id)
+          .map(existingBooking -> {
+            existingBooking.setNumberOfGuests(numberOfGuests);
+            tableBookingRepository.save(existingBooking);
+            return ResponseEntity.ok(existingBooking);
+          })
+          .orElse(ResponseEntity.notFound().build()); // Devuelve 404 si la reserva no existe
+}
+
+```
+#### Explicación:
+
+- **`@PatchMapping("/{id}/...")`**: Define un endpoint PATCH para actualizaciones parciales.
+- **`@DynamicUpdate`**: Anotación en la entidad que permite que solo los campos modificados sean persistidos en la base de datos.
+
+---
+
+## **4. Peticiones DELETE**
+
+### ¿Para qué se utiliza DELETE?
+El método **DELETE** se utiliza para **eliminar un recurso existente**.
+
+### Ejemplo con código:
+
+```java
+@DeleteMapping("/{id}")
+public ResponseEntity<Void> deleteBooking(@PathVariable Long id) {
+    return tableBookingRepository.findById(id)
+            .map(existingBooking -> {
+                tableBookingRepository.delete(existingBooking);
+                return ResponseEntity.noContent().build();  // Devuelve 204 No Content
+            })
+            .orElse(ResponseEntity.notFound().build());
+}
+```
+
+#### Explicación:
+
+- **`@DeleteMapping("/{id}")`**: Mapea una solicitud DELETE a un endpoint que recibe un ID.
+- **`204 No Content`**: Indica que el recurso se eliminó correctamente.
+- **`404 Not Found`**: Si el recurso no existe.
+
+---
+
+### Ejercicio: Implementar métodos PUT, PATCH y DELETE en una API REST
+
+#### Objetivos:
+
+1. **PUT**: Actualizar completamente los datos de un curso existente.
+    - Debes implementar un endpoint que permita actualizar todos los campos de un curso.
+    - Si el curso con el ID especificado no existe, devuelve un **404 Not Found**.
+    - Si la actualización es exitosa, devuelve un **200 OK** con los datos del curso actualizados.
+
+2. **PATCH**: Actualizar parcialmente los datos de un curso.
+    - Implementa dos endpoints **PATCH**: uno para actualizar el nombre del curso y otro para actualizar la fecha de inicio.
+    - Valida adecuadamente los datos recibidos en la solicitud.
+    - Si los datos no son válidos o el curso no existe, devuelve un **400 Bad Request** o **404 Not Found** según corresponda.
+
+3. **DELETE**: Eliminar un curso.
+    - Implementa un endpoint que permita eliminar un curso por su ID.
+    - Si el curso no existe, devuelve un **404 Not Found**.
+    - Si la eliminación es exitosa, devuelve un **204 No Content**.
+
+#### Requerimientos:
+
+1. **PUT**:
+    - Endpoint: `/api/courses/{id}`
+    - Método: `PUT`
+    - Debes recibir un `CourseRequestDTO` con todos los campos requeridos (nombre del curso, nombre del instructor, fecha de inicio y duración).
+
+2. **PATCH**:
+    - Endpoint 1: `/api/courses/{id}/course-name`
+        - Método: `PATCH`
+        - Recibe solo el nuevo nombre del curso como un **String** en el cuerpo de la solicitud  o si lo prefieres un DTO que lo contenga..
+    - Endpoint 2: `/api/courses/{id}/start-date`
+        - Método: `PATCH`
+        - Recibe solo la nueva fecha de inicio del curso como un **String** (valida el formato y que la fecha sea presente o futura)  o si lo prefieres un DTO que lo contenga..
+
+3. **DELETE**:
+    - Endpoint: `/api/courses/{id}`
+    - Método: `DELETE`
+    - Si el curso es eliminado exitosamente, devuelve un código **204 No Content**.
+
+#### Validaciones:
+
+- Asegúrate de que los datos enviados en las solicitudes sean válidos utilizando **Jakarta Bean Validation**.
+- Si algún campo es inválido, devuelve un código **400 Bad Request** con un mensaje de error apropiado.
